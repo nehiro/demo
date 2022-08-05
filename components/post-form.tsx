@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import Button from '../components/button';
 import { useAuth } from '../context/auth';
 import { auth, db } from '../firebase/client';
+import { revalidate } from '../lib/revalidate';
 import { Post } from '../types/post';
 
 const PostForm = ({ isEditMode }: { isEditMode: boolean }) => {
@@ -50,18 +51,9 @@ const PostForm = ({ isEditMode }: { isEditMode: boolean }) => {
       authorId: fbUser.uid,
     };
     setDoc(ref, post).then(async () => {
-      const path = `/posts/${post.id}`;
+      await revalidate('/');
 
-      const token = await auth.currentUser?.getIdToken(true);
-      // console.log(token, 'token');
-
-      fetch(`/api/revalidate?path=${path}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token,
-        },
-      })
+      return revalidate(`/posts/${post.id}`)
         .then((res) => res.json())
         .then((data) => {
           alert(`投稿を${isEditMode ? '更新' : '作成'}しました`);
@@ -74,8 +66,10 @@ const PostForm = ({ isEditMode }: { isEditMode: boolean }) => {
   };
   const deletePost = () => {
     const ref = doc(db, `posts/${editTargetId}`);
-    return deleteDoc(ref).then(() => {
+    return deleteDoc(ref).then(async () => {
       alert('記事を削除しました');
+      await revalidate('/');
+      await revalidate(`/posts/${editTargetId}`);
       router.push('/');
     });
   };
@@ -84,7 +78,7 @@ const PostForm = ({ isEditMode }: { isEditMode: boolean }) => {
       <h1>記事{isEditMode ? '編集' : '投稿'}</h1>
       <form onSubmit={handleSubmit(submit)} className="space-y-6">
         <div>
-          <label className="block mb-0.5" htmlFor="title">
+          <label className="mb-0.5 block" htmlFor="title">
             タイトル*
           </label>
           <input
@@ -102,11 +96,11 @@ const PostForm = ({ isEditMode }: { isEditMode: boolean }) => {
             type="text"
           />
           {errors.title && (
-            <p className="text-red-500 mt-0.5">{errors.title.message}</p>
+            <p className="mt-0.5 text-red-500">{errors.title.message}</p>
           )}
         </div>
         <div>
-          <label className="block mb-0.5" htmlFor="profile">
+          <label className="mb-0.5 block" htmlFor="profile">
             本文*
           </label>
           <textarea
@@ -122,17 +116,19 @@ const PostForm = ({ isEditMode }: { isEditMode: boolean }) => {
             id="body"
             name="body"
           />
-          <p className="text-sm text-slate-400 leading-none">
+          <p className="text-sm leading-none text-slate-400">
             {watch('body')?.length || 0}/255
           </p>
           {errors.body && (
-            <p className="text-red-500 mt-0.5">{errors.body.message}</p>
+            <p className="mt-0.5 text-red-500">{errors.body.message}</p>
           )}
         </div>
         <Button>{isEditMode ? '更新' : '投稿'}</Button>
-        <button type="button" onClick={deletePost}>
-          削除
-        </button>
+        {isEditMode && (
+          <button type="button" onClick={deletePost}>
+            削除
+          </button>
+        )}
       </form>
     </div>
   );

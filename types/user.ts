@@ -3,4 +3,5 @@ export interface User {
   name: string;
   nickname: string;
   profile: string;
+  avatarURL: string;
 }

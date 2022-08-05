@@ -22,27 +22,12 @@ import Link from 'next/link';
 import { useUser } from '../lib/user';
 import { NextPageWithLayout } from './_app';
 import Layout from '../components/layout';
+import PostItemCard from '../components/post-item-card';
 
 const searchClient = algoliasearch(
   'QXD4IOGV41',
   '8a1196defb5a67d93bcc6a053290e350'
 );
-const Hit: HitsProps<Post>['hitComponent'] = ({ hit }) => {
-  const user = useUser(hit.authorId);
-  return (
-    <div className="rounded-md shadow p-4">
-      <h2 className="line-clamp-2">
-        <Link href={`/posts/${hit.id}`}>
-          <a>{hit.title}</a>
-        </Link>
-      </h2>
-      <p className="text-slate-500">
-        {format(hit.createdAt, 'yyyy年MM月dd日')}
-      </p>
-      {user && <p className="truncate">{user.name}</p>}
-    </div>
-  );
-};
 
 const NoResultsBoundary = ({ children }: { children: ReactNode }) => {
   const { results } = useInstantSearch();
@@ -53,7 +38,7 @@ const NoResultsBoundary = ({ children }: { children: ReactNode }) => {
   return (
     <div>
       {results.query && (
-        <p className="text-sm text-slate-500 my-4">
+        <p className="my-4 text-sm text-slate-500">
           「{results.query}」の検索結果が{results.nbHits}件見つかりました。
         </p>
       )}
@@ -78,7 +63,7 @@ const Search: NextPageWithLayout = () => {
             resetIcon: 'hidden',
           }}
           submitIconComponent={() => (
-            <span className="w-10 absolute right-0 top-1/2 -translate-y-1/2 p-2">
+            <span className="absolute right-0 top-1/2 w-10 -translate-y-1/2 p-2">
               <SearchIcon className="h-5 w-5 text-slate-500" />
             </span>
           )}
@@ -88,7 +73,7 @@ const Search: NextPageWithLayout = () => {
         <NoResultsBoundary>
           <Hits<Post>
             classNames={{ list: 'space-y-4 my-6' }}
-            hitComponent={Hit}
+            hitComponent={({ hit }) => <PostItemCard post={hit}></PostItemCard>}
           />
           <Pagination
             classNames={{

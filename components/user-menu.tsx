@@ -10,7 +10,8 @@ import {
 import { ChevronDownIcon } from '@heroicons/react/solid';
 import Link from 'next/link';
 import { logout } from '../lib/auth';
-
+import { useAuth } from '../context/auth';
+import Image from 'next/image';
 const items = [
   { label: 'プロフィール', href: '/profile' },
   { label: '設定', href: '/settings' },
@@ -33,10 +34,19 @@ const MyLink = forwardRef<
 MyLink.displayName = 'MyLink';
 
 const UserMenu = () => {
+  const { user } = useAuth();
+  if (!user) {
+    return null;
+  }
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
-        <Menu.Button className="bg-slate-300 block rounded-full h-9 w-9"></Menu.Button>
+        <Menu.Button className="block h-9 w-9 overflow-hidden rounded-full bg-slate-300">
+          <img
+            src={user.avatarURL}
+            className="block h-full w-full object-cover"
+          />
+        </Menu.Button>
       </div>
       <Transition
         as={Fragment}
